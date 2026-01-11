@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculateur de Moyenne - Semestre 1</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 1000px;
+        margin: auto;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+
+      .subject-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+      }
+
+      .subject-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .subject-name {
+        font-weight: 600;
+        color: #333;
+      }
+      .coef-badge {
+        background: #667eea;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .inputs-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .input-label {
+        font-size: 12px;
+        color: #666;
+        font-weight: 600;
+      }
+
+      .grade-input {
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 16px;
+      }
+
+      .grade-input.invalid {
+        border-color: #e74c3c;
+      }
+
+      .subject-average {
+        margin-top: 15px;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .calculate-btn {
+        width: 100%;
+        padding: 15px;
+        margin-top: 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .result {
+        margin-top: 30px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        text-align: center;
+        display: none;
+      }
+
+      .result.show {
+        display: block;
+      }
+
+      .average-value {
+        font-size: 48px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .status {
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 15px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        display: inline-block;
+      }
+
+      .status.admis {
+        background: #2ecc71;
+        color: white;
+      }
+      .status.ajourne {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .error-message {
+        color: #e74c3c;
+        text-align: center;
+        margin-top: 15px;
+        display: none;
+      }
+
+      .error-message.show {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Calculateur de Moyenne</h1>
+      <p class="subtitle">Semestre 1 - Science de l’Informatique</p>
+
+      <div id="subjects-container"></div>
+
+      <button class="calculate-btn" onclick="calculateAverage()">
+        Calculer la Moyenne Générale
+      </button>
+
+      <div class="error-message" id="error-message">
+        Veuillez remplir toutes les notes entre 0 et 20
+      </div>
+
+      <div class="result" id="result">
+        <div>Moyenne Générale</div>
+        <div class="average-value" id="average-value">0.00</div>
+        <div class="status" id="status">Admis</div>
+      </div>
+    </div>
+
+    <script>
+      const matieres = [
+        { libelle: "Système d'exploitation 1", coef: 1.5, regime: 2 },
+        {
+          libelle: "Systèmes logiques et architecture des ordinateurs",
+          coef: 2,
+          regime: 2,
+        },
+        { libelle: "Technologies multimédias", coef: 1.5, regime: 2 },
+        { libelle: "Logique formelle", coef: 1.5, regime: 1 },
+        {
+          libelle: "Algorithmique et structures de données",
+          coef: 2,
+          regime: 1,
+        },
+        { libelle: "Atelier programmation 1", coef: 1.5, regime: 2 },
+        { libelle: "Analyse 1", coef: 1.5, regime: 1 },
+        { libelle: "Algèbre 1", coef: 1.5, regime: 1 },
+        { libelle: "Techniques de communication 1", coef: 1, regime: 3 },
+        { libelle: "Anglais 1", coef: 1, regime: 3 },
+      ];
+
+      function calculateSubjectAverage(ds, test, exam, oral, tp, regime) {
+        if (regime === 1) return ds * 0.2 + test * 0.1 + exam * 0.7;
+        if (regime === 2) return ds * 0.1 + tp * 0.2 + exam * 0.7;
+        if (regime === 3) return exam * 0.8 + oral * 0.2;
+        return NaN;
+      }
+
+      function initializeSubjects() {
+        const container = document.getElementById("subjects-container");
+
+        matieres.forEach((m, i) => {
+          let inputs = "";
+
+          if (m.regime === 1) {
+            inputs = `
+<div class="input-group"><label class="input-label">DS</label><input type="number" class="grade-input" id="ds-${i}" oninput="updateSubject(${i})"></div>
+<div class="input-group"><label class="input-label">Test</label><input type="number" class="grade-input" id="test-${i}" oninput="updateSubject(${i})"></div>
+<div class="input-group"><label class="input-label">Examen</label><input type="number" class="grade-input" id="exam-${i}" oninput="updateSubject(${i})"></div>`;
+          }
+
+          if (m.regime === 2) {
+            inputs = `
+<div class="input-group"><label class="input-label">DS</label><input type="number" class="grade-input" id="ds-${i}" oninput="updateSubject(${i})"></div>
+<div class="input-group"><label class="input-label">TP</label><input type="number" class="grade-input" id="tp-${i}" oninput="updateSubject(${i})"></div>
+<div class="input-group"><label class="input-label">Examen</label><input type="number" class="grade-input" id="exam-${i}" oninput="updateSubject(${i})"></div>`;
+          }
+
+          if (m.regime === 3) {
+            inputs = `
+<div class="input-group"><label class="input-label">Examen</label><input type="number" class="grade-input" id="exam-${i}" oninput="updateSubject(${i})"></div>
+<div class="input-group"><label class="input-label">Oral</label><input type="number" class="grade-input" id="oral-${i}" oninput="updateSubject(${i})"></div>`;
+          }
+
+          container.innerHTML += `
+<div class="subject-card">
+<div class="subject-header">
+<div class="subject-name">${m.libelle}</div>
+<div class="coef-badge">Coef ${m.coef}</div>
+</div>
+<div class="inputs-container">${inputs}</div>
+<div class="subject-average" id="avg-${i}">Moyenne: --</div>
+</div>`;
+        });
+      }
+
+      function updateSubject(i) {
+        const m = matieres[i];
+        let ds = 0,
+          test = 0,
+          exam = 0,
+          tp = 0,
+          oral = 0;
+
+        if (m.regime === 1) {
+          ds = parseFloat(document.getElementById(`ds-${i}`).value);
+          test = parseFloat(document.getElementById(`test-${i}`).value);
+          exam = parseFloat(document.getElementById(`exam-${i}`).value);
+          if ([ds, test, exam].some((v) => isNaN(v))) return;
+        }
+
+        if (m.regime === 2) {
+          ds = parseFloat(document.getElementById(`ds-${i}`).value);
+          tp = parseFloat(document.getElementById(`tp-${i}`).value);
+          exam = parseFloat(document.getElementById(`exam-${i}`).value);
+          if ([ds, tp, exam].some((v) => isNaN(v))) return;
+        }
+
+        if (m.regime === 3) {
+          exam = parseFloat(document.getElementById(`exam-${i}`).value);
+          oral = parseFloat(document.getElementById(`oral-${i}`).value);
+          if ([exam, oral].some((v) => isNaN(v))) return;
+        }
+
+        const avg = calculateSubjectAverage(ds, test, exam, oral, tp, m.regime);
+        document.getElementById(
+          `avg-${i}`
+        ).textContent = `Moyenne: ${avg.toFixed(2)}`;
+      }
+
+      function calculateAverage() {
+        let sommeNotes = 0;
+        let sommeCoef = 0;
+        let valid = true;
+
+        matieres.forEach((m, i) => {
+          const avgText = document.getElementById(`avg-${i}`).textContent;
+          if (!avgText.includes(":")) valid = false;
+          const avg = parseFloat(avgText.split(":")[1]);
+          if (isNaN(avg)) valid = false;
+          sommeNotes += avg * m.coef;
+          sommeCoef += m.coef;
+        });
+
+        if (!valid) {
+          document.getElementById("error-message").classList.add("show");
+          return;
+        }
+
+        const moyenne = sommeNotes / sommeCoef;
+        document.getElementById("average-value").textContent =
+          moyenne.toFixed(2);
+
+        const status = document.getElementById("status");
+        status.textContent = moyenne >= 10 ? "Admis" : "Redouble";
+        status.className = "status " + (moyenne >= 10 ? "admis" : "Redouble");
+
+        document.getElementById("result").classList.add("show");
+      }
+
+      initializeSubjects();
+    </script>
+  </body>
+</html>
